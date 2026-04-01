@@ -1,0 +1,12 @@
+[package]
+name = "brrr"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+dirs = "6.0"
+git2 = "0.20"
+serde = { version = "1.0", features = ["derive"] }
+toml = "1.1"
+thiserror = "2.0"
