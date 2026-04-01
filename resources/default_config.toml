@@ -1,47 +1,31 @@
-[paths]
 root = "/home/eri/Code/igalia"
 
 [browsers.firefox]
-container = "firefox-dev"
 build_dir = "obj"
-main_worktree = "firefox-main"
+container_bootstrap = "./mach bootstrap"
+container_packages = ["git", "make", "python3", "sccache", "libasound2"]
+remote = "git@github.com:mozilla-firefox/firefox.git"
 use_sccache = true
 
-[browsers.firefox.bootstrap]
-command = """
-curl -sSL https://raw.githubusercontent.com/mozilla-firefox/firefox/refs/heads/main/python/mozboot/bin/bootstrap.py -o /tmp/bootstrap.py
-python3 /tmp/bootstrap.py
-"""
-
 [browsers.webkit]
-container = "webkit-dev"
 build_dir = "WebKitBuild"
-main_worktree = "webkit-main"
+remote = "git@github.com:WebKit/WebKit.git"
 use_wkdev = true
 use_sccache = true
 
-[browsers.webkit.bootstrap]
-remote = "git@github.com:WebKit/WebKit.git"
-
 [browsers.servo]
-container = "servo-dev"
 build_dir = "target"
-main_worktree = "servo-main"
-
-[browsers.servo.bootstrap]
+container_bootstrap = "./mach bootstrap"
+container_packages = ["build-essential", "ccache", "clang", "cmake", "curl", "g++", "git", "gperf", "libdbus-1-dev", "libfreetype6-dev", "libgl1-mesa-dri", "libgles2-mesa-dev", "libglib2.0-dev", "gstreamer1.0-plugins-good", "gstreamer1.0-plugins-bad", "libgstreamer-plugins-bad1.0-dev", "gstreamer1.0-plugins-ugly", "gstreamer1.0-plugins-base", "libgstreamer-plugins-base1.0-dev", "gstreamer1.0-libav", "libgstrtspserver-1.0-dev", "gstreamer1.0-tools", "libges-1.0-dev", "libharfbuzz-dev", "liblzma-dev", "libudev-dev", "libunwind-dev", "libvulkan1", "libx11-dev", "libxcb-render0-dev", "libxcb-shape0-dev", "libxcb-xfixes0-dev", "libxmu-dev", "libxmu6", "libegl1-mesa-dev", "llvm-dev", "m4", "xorg-dev", "libxkbcommon0", "libxkbcommon-x11-0"]
 remote = "git@github.com:servo/servo.git"
 
 [browsers.chromium]
-container = "chromium-dev"
 build_dir = "out"
-main_worktree = "chromium"
-use_gclient = true
-
-[browsers.chromium.bootstrap]
-command = """
+remote = """
 [ ! -d 'depot_tools' ] && git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 export PATH="$PWD/depot_tools:$PATH"
 mkdir chromium-main
 cd chromium-main
 fetch --nohooks chromium
 """
+use_gclient = true

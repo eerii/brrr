@@ -7,35 +7,24 @@ use std::path::PathBuf;
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub browsers: HashMap<String, BrowserConfig>,
-    pub paths: PathConfig,
+    pub root: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct BrowserConfig {
-    pub container: String,
     pub build_dir: String,
-    pub main_worktree: String,
     #[serde(default)]
-    pub bootstrap: BootstrapConfig,
+    pub container_bootstrap: Option<String>,
+    #[serde(default)]
+    pub container_packages: Vec<String>,
+    #[serde(default)]
+    pub remote: Option<String>,
     #[serde(default)]
     pub use_wkdev: bool,
     #[serde(default)]
     pub use_gclient: bool,
     #[serde(default)]
     pub use_sccache: bool,
-}
-
-#[derive(Debug, Deserialize, Clone, Default)]
-pub struct BootstrapConfig {
-    #[serde(default)]
-    pub remote: Option<String>,
-    #[serde(default)]
-    pub command: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct PathConfig {
-    pub root: PathBuf,
 }
 
 impl Config {

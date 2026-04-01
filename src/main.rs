@@ -12,19 +12,16 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Bootstrap,
-    Worktree {
-        #[command(subcommand)]
-        action: WorktreeAction,
-    },
-    Container {
-        #[command(subcommand)]
-        action: ContainerAction,
-    },
     Build {
         #[arg(long)]
         release: bool,
     },
-    Test {
+    Clean,
+    Container {
+        #[command(subcommand)]
+        action: ContainerAction,
+    },
+    Git {
         #[arg(last = true)]
         args: Vec<String>,
     },
@@ -32,15 +29,14 @@ enum Commands {
         #[arg(last = true)]
         args: Vec<String>,
     },
-    Clean,
     Status,
-    Git {
+    Test {
         #[arg(last = true)]
         args: Vec<String>,
     },
-    Exec {
-        #[arg(last = true)]
-        command: Vec<String>,
+    Worktree {
+        #[command(subcommand)]
+        action: WorktreeAction,
     },
 }
 
@@ -50,21 +46,24 @@ enum WorktreeAction {
         name: String,
         branch: Option<String>,
     },
-    Switch {
-        name: String,
-        branch: Option<String>,
-    },
     List,
     Remove {
         name: String,
+    },
+    Switch {
+        name: String,
+        branch: Option<String>,
     },
 }
 
 #[derive(Debug, Subcommand)]
 enum ContainerAction {
+    Enter {
+        #[arg(last = true)]
+        args: Vec<String>,
+    },
+    Finish,
     Setup,
-    Enter,
-    Status,
 }
 
 fn main() {
@@ -79,16 +78,22 @@ fn run() -> brrr::Result<()> {
     let context = BrowserContext::detect()?;
 
     match cli.command {
-        Commands::Bootstrap => context.bootstrap()?,
-        Commands::Worktree { action: _ } => {}
-        Commands::Container { action: _ } => {}
+        Commands::Bootstrap => {
+            context.fetch_remote()?;
+            context.container_setup()?;
+        }
         Commands::Build { release: _ } => {}
-        Commands::Test { args: _ } => {}
-        Commands::Run { args: _ } => {}
         Commands::Clean => {}
-        Commands::Status => {}
+        Commands::Container { action } => match action {
+            ContainerAction::Enter { args } => context.container_enter(args)?,
+            ContainerAction::Finish => context.container_finish()?,
+            ContainerAction::Setup => context.container_setup()?,
+        },
         Commands::Git { args: _ } => {}
-        Commands::Exec { command: _ } => {}
+        Commands::Run { args: _ } => {}
+        Commands::Status => {}
+        Commands::Test { args: _ } => {}
+        Commands::Worktree { action: _ } => {}
     }
 
     Ok(())

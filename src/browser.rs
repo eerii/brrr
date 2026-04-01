@@ -63,29 +63,37 @@ impl BrowserContext {
                 .remove(browser.name())
                 .expect("Browser should exist"),
             repo: Repository::discover(cwd).ok(),
-            root: config.paths.root.join(browser.name()),
+            root: config.root.join(browser.name()),
             browser,
         })
     }
 
-    pub fn bootstrap(&self) -> Result<()> {
-        if let Some(remote) = &self.config.bootstrap.remote {
-            let path = self.root.join(format!("{}-main", self.browser.name()));
+    pub fn fetch_remote(&self) -> Result<()> {
+        let Some(remote) = &self.config.remote else {
+            println!("There is no configured remote for {}", self.browser.name());
+            return Ok(());
+        };
+
+        if remote.starts_with("git@") || remote.starts_with("https://") {
+            let path = self.main_worktree();
             println!("Cloning {} into {:?}", remote, &path);
             std::process::Command::new("git")
                 .args(["clone", remote, &path.to_string_lossy()])
                 .spawn()?
                 .wait()?;
+            return Ok(());
         }
 
-        if let Some(command) = &self.config.bootstrap.command {
-            println!("Bootstrap command:\n{}", command);
-            std::process::Command::new("sh")
-                .args(["-c", command])
-                .spawn()?
-                .wait()?;
-        }
+        println!("Fetch remote: {}", remote);
+        std::process::Command::new("sh")
+            .args(["-c", remote])
+            .spawn()?
+            .wait()?;
 
         Ok(())
+    }
+
+    pub fn main_worktree(&self) -> PathBuf {
+        self.root.join(format!("{}-main", self.browser.name()))
     }
 }
