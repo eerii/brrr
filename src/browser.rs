@@ -63,7 +63,7 @@ impl BrowserContext {
                 .remove(browser.name())
                 .expect("Browser should exist"),
             repo: Repository::discover(cwd).ok(),
-            root: config.root.join(browser.name()),
+            root: PathBuf::from(shellexpand::full(&config.root)?.into_owned()).join(browser.name()),
             browser,
         })
     }

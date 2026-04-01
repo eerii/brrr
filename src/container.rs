@@ -1,5 +1,5 @@
 use crate::{browser::BrowserContext, error::Result};
-use std::process::Command;
+use std::{path::Path, process::Command};
 
 impl BrowserContext {
     fn container_name(&self) -> String {
@@ -47,20 +47,16 @@ impl BrowserContext {
                 "Installing packages: {}",
                 self.config.container_packages.join(", ")
             );
-            let cmd = format!(
-                "sudo apt-get update && sudo apt-get install -y {}",
+            self.run("sudo apt-get update")?;
+            self.run(&format!(
+                "sudo apt-get install {}",
                 self.config.container_packages.join(" ")
-            );
-            self.run_in_container(cmd)?;
+            ))?;
         }
 
         if let Some(bootstrap) = self.config.container_bootstrap.clone() {
             println!("Running bootstrap: {}", bootstrap);
-            self.run_in_container(format!(
-                "cd {} && {}",
-                self.main_worktree().display(),
-                bootstrap
-            ))?;
+            self.run_in_path(&bootstrap, &self.main_worktree())?;
         }
 
         Ok(())
@@ -83,7 +79,15 @@ impl BrowserContext {
         Ok(())
     }
 
-    fn run_in_container(&self, cmd: String) -> Result<()> {
-        self.container_enter(vec!["sh".into(), "-c".into(), cmd])
+    pub fn run(&self, cmd: &str) -> Result<()> {
+        self.container_enter(shell_words::split(cmd)?)
+    }
+
+    pub fn run_in_path(&self, cmd: &str, cwd: &Path) -> Result<()> {
+        self.container_enter(vec![
+            "sh".into(),
+            "-c".into(),
+            format!("cd {} && {}", cwd.display(), cmd),
+        ])
     }
 }

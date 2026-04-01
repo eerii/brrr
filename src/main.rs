@@ -2,8 +2,8 @@ use brrr::browser::BrowserContext;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "bx")]
-#[command(about = "Manage browser development environments", long_about = None)]
+#[command(name = "brrr")]
+#[command(about = "manage browser development environments")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

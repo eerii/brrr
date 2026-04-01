@@ -1,4 +1,4 @@
-root = "/home/eri/Code/igalia"
+root = "$WORK_DIR"
 
 [browsers.firefox]
 build_dir = "obj"

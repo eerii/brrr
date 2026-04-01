@@ -2,17 +2,16 @@ use crate::error::{Error, Result};
 
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub browsers: HashMap<String, BrowserConfig>,
-    pub root: PathBuf,
+    pub root: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct BrowserConfig {
-    pub build_dir: String,
+    // pub build_dir: String,
     #[serde(default)]
     pub container_bootstrap: Option<String>,
     #[serde(default)]
@@ -39,6 +38,6 @@ impl Config {
             return toml::from_str(&content).map_err(Error::Config);
         }
 
-        toml::from_str(include_str!("../resources/default_config.toml")).map_err(Error::Config)
+        toml::from_str(include_str!("../resources/config.toml")).map_err(Error::Config)
     }
 }
