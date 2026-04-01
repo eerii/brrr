@@ -1,8 +1,17 @@
+[paths]
+root = "/home/eri/Code/igalia"
+
 [browsers.firefox]
 container = "firefox-dev"
 build_dir = "obj"
 main_worktree = "firefox-main"
 use_sccache = true
+
+[browsers.firefox.bootstrap]
+command = """
+curl -sSL https://raw.githubusercontent.com/mozilla-firefox/firefox/refs/heads/main/python/mozboot/bin/bootstrap.py -o /tmp/bootstrap.py
+python3 /tmp/bootstrap.py
+"""
 
 [browsers.webkit]
 container = "webkit-dev"
@@ -11,10 +20,16 @@ main_worktree = "webkit-main"
 use_wkdev = true
 use_sccache = true
 
+[browsers.webkit.bootstrap]
+remote = "git@github.com:WebKit/WebKit.git"
+
 [browsers.servo]
 container = "servo-dev"
 build_dir = "target"
 main_worktree = "servo-main"
+
+[browsers.servo.bootstrap]
+remote = "git@github.com:servo/servo.git"
 
 [browsers.chromium]
 container = "chromium-dev"
@@ -22,5 +37,11 @@ build_dir = "out"
 main_worktree = "chromium"
 use_gclient = true
 
-[paths]
-root = "/home/eri/Code/igalia"
+[browsers.chromium.bootstrap]
+command = """
+[ ! -d 'depot_tools' ] && git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+export PATH="$PWD/depot_tools:$PATH"
+mkdir chromium-main
+cd chromium-main
+fetch --nohooks chromium
+"""

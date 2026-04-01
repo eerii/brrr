@@ -1,4 +1,4 @@
-use brrr::{Error, browser::BrowserContext};
+use brrr::browser::BrowserContext;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -11,6 +11,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    Bootstrap,
     Worktree {
         #[command(subcommand)]
         action: WorktreeAction,
@@ -75,10 +76,10 @@ fn main() {
 
 fn run() -> brrr::Result<()> {
     let cli = Cli::parse();
-    let browser = BrowserContext::new().ok_or(Error::NotInBrowserDir)?;
-    dbg!(browser.browser, browser.repo.workdir());
+    let context = BrowserContext::detect()?;
 
     match cli.command {
+        Commands::Bootstrap => context.bootstrap()?,
         Commands::Worktree { action: _ } => {}
         Commands::Container { action: _ } => {}
         Commands::Build { release: _ } => {}

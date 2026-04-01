@@ -16,11 +16,21 @@ pub struct BrowserConfig {
     pub build_dir: String,
     pub main_worktree: String,
     #[serde(default)]
+    pub bootstrap: BootstrapConfig,
+    #[serde(default)]
     pub use_wkdev: bool,
     #[serde(default)]
     pub use_gclient: bool,
     #[serde(default)]
     pub use_sccache: bool,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct BootstrapConfig {
+    #[serde(default)]
+    pub remote: Option<String>,
+    #[serde(default)]
+    pub command: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
