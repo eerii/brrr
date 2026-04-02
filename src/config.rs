@@ -9,21 +9,14 @@ pub struct Config {
     pub root: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Default, Deserialize, Clone)]
+#[serde(default)]
 pub struct BrowserConfig {
-    // pub build_dir: String,
-    #[serde(default)]
-    pub container_bootstrap: Option<String>,
-    #[serde(default)]
+    pub commands: HashMap<String, String>,
     pub container_packages: Vec<String>,
-    #[serde(default)]
+    pub env: Vec<String>,
     pub remote: Option<String>,
-    #[serde(default)]
     pub use_wkdev: bool,
-    #[serde(default)]
-    pub use_gclient: bool,
-    #[serde(default)]
-    pub use_sccache: bool,
 }
 
 impl Config {

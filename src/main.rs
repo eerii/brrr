@@ -1,9 +1,9 @@
-use brrr::browser::BrowserContext;
+use brrr::{browser::BrowserContext, Error};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(name = "brrr")]
-#[command(about = "manage browser development environments")]
+#[command(about = "Manage browser development environments")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -11,45 +11,74 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(about = "Setup the development environment")]
     Bootstrap,
-    Build {
-        #[arg(long)]
-        release: bool,
-    },
-    Clean,
+    #[command(about = "Manage containers")]
     Container {
         #[command(subcommand)]
         action: ContainerAction,
     },
-    Git {
-        #[arg(last = true)]
-        args: Vec<String>,
-    },
-    Run {
-        #[arg(last = true)]
-        args: Vec<String>,
-    },
-    Status,
-    Test {
-        #[arg(last = true)]
-        args: Vec<String>,
-    },
+    #[command(flatten)]
+    Exec(ExecCommands),
+    #[command(about = "Manage worktrees")]
     Worktree {
         #[command(subcommand)]
         action: WorktreeAction,
     },
 }
 
+#[derive(Parser)]
+struct LastArgs {
+    #[arg(last = true)]
+    args: Vec<String>,
+}
+
+#[derive(Subcommand)]
+enum ExecCommands {
+    #[command(about = "Build the browser")]
+    Build(#[command(flatten)] LastArgs),
+    #[command(about = "LSP support outside of the container")]
+    Check(#[command(flatten)] LastArgs),
+    #[command(about = "Clean build artifacts")]
+    Clean(#[command(flatten)] LastArgs),
+    #[command(about = "Run the browser")]
+    Run(#[command(flatten)] LastArgs),
+    #[command(about = "Web platform tests")]
+    Test(#[command(flatten)] LastArgs),
+}
+
+impl ExecCommands {
+    fn name(&self) -> &'static str {
+        match self {
+            Self::Build(_) => "build",
+            Self::Check(_) => "check",
+            Self::Clean(_) => "clean",
+            Self::Run(_) => "run",
+            Self::Test(_) => "test",
+        }
+    }
+
+    fn args(&self) -> &[String] {
+        match self {
+            Self::Build(a) | Self::Check(a) | Self::Clean(a) | Self::Run(a) | Self::Test(a) => {
+                &a.args
+            }
+        }
+    }
+}
+
 #[derive(Debug, Subcommand)]
 enum WorktreeAction {
+    #[command(about = "Create a new worktree")]
     Create {
         name: String,
         branch: Option<String>,
     },
+    #[command(about = "List all worktrees")]
     List,
-    Remove {
-        name: String,
-    },
+    #[command(about = "Remove a worktree")]
+    Remove { name: String },
+    #[command(about = "Switch to a worktree (and optionally to a branch)")]
     Switch {
         name: String,
         branch: Option<String>,
@@ -58,11 +87,16 @@ enum WorktreeAction {
 
 #[derive(Debug, Subcommand)]
 enum ContainerAction {
+    #[command(about = "Run a command inside of the container")]
     Enter {
         #[arg(last = true)]
         args: Vec<String>,
     },
+    #[command(about = "Finish bootstrapping the container (if interrupted)")]
     Finish,
+    #[command(about = "Stop and remove the container")]
+    Remove,
+    #[command(about = "Create the container and bootstrap packages")]
     Setup,
 }
 
@@ -82,17 +116,25 @@ fn run() -> brrr::Result<()> {
             context.fetch_remote()?;
             context.container_setup()?;
         }
-        Commands::Build { release: _ } => {}
-        Commands::Clean => {}
         Commands::Container { action } => match action {
-            ContainerAction::Enter { args } => context.container_enter(args)?,
+            ContainerAction::Enter { args } => context.run(&args.join("  "))?,
             ContainerAction::Finish => context.container_finish()?,
+            ContainerAction::Remove => context.container_remove()?,
             ContainerAction::Setup => context.container_setup()?,
         },
-        Commands::Git { args: _ } => {}
-        Commands::Run { args: _ } => {}
-        Commands::Status => {}
-        Commands::Test { args: _ } => {}
+        Commands::Exec(cmd) => {
+            let name = cmd.name();
+            let run = context
+                .config
+                .commands
+                .get(name)
+                .ok_or(Error::NoCommand(name.into()))?;
+            if cmd.args().is_empty() {
+                context.run(&run)?;
+            } else {
+                context.run(&format!("{}{}", run, cmd.args().join(" ")))?;
+            }
+        }
         Commands::Worktree { action: _ } => {}
     }
 

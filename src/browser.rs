@@ -6,47 +6,10 @@ use crate::{
 
 use git2::Repository;
 
-use std::path::{Path, PathBuf};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Browser {
-    Firefox,
-    WebKit,
-    Servo,
-    Chromium,
-}
-
-impl Browser {
-    const VARIANTS: [Browser; 4] = [
-        Browser::Firefox,
-        Browser::WebKit,
-        Browser::Servo,
-        Browser::Chromium,
-    ];
-
-    pub fn name(&self) -> &'static str {
-        match self {
-            Browser::Firefox => "firefox",
-            Browser::WebKit => "webkit",
-            Browser::Servo => "servo",
-            Browser::Chromium => "chromium",
-        }
-    }
-
-    fn from_path(path: &Path) -> Result<Self> {
-        Browser::VARIANTS
-            .into_iter()
-            .find(|b| {
-                path.components()
-                    .find(|dir| dir.as_os_str() == b.name())
-                    .is_some()
-            })
-            .ok_or(Error::NotInBrowserDir)
-    }
-}
+use std::path::PathBuf;
 
 pub struct BrowserContext {
-    pub browser: Browser,
+    pub browser: String,
     pub config: BrowserConfig,
     pub repo: Option<Repository>,
     pub root: PathBuf,
@@ -55,22 +18,31 @@ pub struct BrowserContext {
 impl BrowserContext {
     pub fn detect() -> Result<Self> {
         let cwd = std::env::current_dir()?;
-        let browser = Browser::from_path(&cwd)?;
-        let mut config = Config::load()?;
+        let config = Config::load()?;
+
+        let root = PathBuf::from(shellexpand::full(&config.root)?.into_owned());
+        let tentative_browser = cwd
+            .strip_prefix(&root)
+            .ok()
+            .and_then(|path| path.components().next())
+            .ok_or(Error::NotInBrowserDir)?;
+        let (browser, browser_config) = config
+            .browsers
+            .into_iter()
+            .find(|(name, _)| *tentative_browser.as_os_str() == **name)
+            .ok_or(Error::NotInBrowserDir)?;
+
         Ok(BrowserContext {
-            config: config
-                .browsers
-                .remove(browser.name())
-                .expect("Browser should exist"),
+            config: browser_config,
             repo: Repository::discover(cwd).ok(),
-            root: PathBuf::from(shellexpand::full(&config.root)?.into_owned()).join(browser.name()),
+            root: root.join(&browser),
             browser,
         })
     }
 
     pub fn fetch_remote(&self) -> Result<()> {
         let Some(remote) = &self.config.remote else {
-            println!("There is no configured remote for {}", self.browser.name());
+            println!("There is no configured remote for {}", self.browser);
             return Ok(());
         };
 
@@ -94,6 +66,6 @@ impl BrowserContext {
     }
 
     pub fn main_worktree(&self) -> PathBuf {
-        self.root.join(format!("{}-main", self.browser.name()))
+        self.root.join(format!("{}-main", self.browser))
     }
 }

@@ -3,7 +3,7 @@ use std::{path::Path, process::Command};
 
 impl BrowserContext {
     fn container_name(&self) -> String {
-        format!("{}-dev", self.browser.name())
+        format!("{}-dev", self.browser)
     }
 
     pub fn container_setup(&self) -> Result<()> {
@@ -54,15 +54,23 @@ impl BrowserContext {
             ))?;
         }
 
-        if let Some(bootstrap) = self.config.container_bootstrap.clone() {
+        if let Some(bootstrap) = self.config.commands.get("bootstrap") {
             println!("Running bootstrap: {}", bootstrap);
-            self.run_in_path(&bootstrap, &self.main_worktree())?;
+            self.run_in_path(bootstrap, &self.main_worktree())?;
         }
 
         Ok(())
     }
 
-    pub fn container_enter(&self, args: Vec<String>) -> Result<()> {
+    pub fn container_remove(&self) -> Result<()> {
+        Command::new("podman")
+            .args(["container", "rm", "--force"])
+            .arg(self.container_name())
+            .status()?;
+        Ok(())
+    }
+
+    pub fn run(&self, command: &str) -> Result<()> {
         let mut cmd = if self.config.use_wkdev {
             Command::new("wkdev-enter")
         } else {
@@ -71,23 +79,26 @@ impl BrowserContext {
 
         cmd.arg("enter").arg(&self.container_name());
 
-        if !args.is_empty() {
-            cmd.arg("--").args(args);
+        if !self.config.env.is_empty() {
+            let env_args = self
+                .config
+                .env
+                .iter()
+                .map(|var| format!("--env {}", var))
+                .collect::<Vec<_>>()
+                .join("  ");
+            cmd.arg("--additional-flags").arg(env_args);
+        }
+
+        if !command.is_empty() {
+            cmd.args(["--", "sh", "-c"]).arg(command);
         }
 
         cmd.status()?;
         Ok(())
     }
 
-    pub fn run(&self, cmd: &str) -> Result<()> {
-        self.container_enter(shell_words::split(cmd)?)
-    }
-
-    pub fn run_in_path(&self, cmd: &str, cwd: &Path) -> Result<()> {
-        self.container_enter(vec![
-            "sh".into(),
-            "-c".into(),
-            format!("cd {} && {}", cwd.display(), cmd),
-        ])
+    pub fn run_in_path(&self, command: &str, cwd: &Path) -> Result<()> {
+        self.run(&format!("cd {} && {}", cwd.display(), command))
     }
 }

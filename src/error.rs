@@ -6,6 +6,8 @@ use thiserror::Error as ThisError;
 pub enum Error {
     #[error("Not in a browser directory")]
     NotInBrowserDir,
+    #[error("No {0} command configured")]
+    NoCommand(String),
     #[error("Config error: {0}")]
     Config(#[from] toml::de::Error),
     #[error("IO error: {0}")]
@@ -14,8 +16,6 @@ pub enum Error {
     Git(#[from] git2::Error),
     #[error("Shell expansion error: {0}")]
     ShellExpand(#[from] shellexpand::LookupError<VarError>),
-    #[error("Shell parser error: {0}")]
-    ShellParse(#[from] shell_words::ParseError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

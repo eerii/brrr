@@ -11,7 +11,7 @@ Feature tracker:
 - [x] Getting the repos
 - [x] Creating containers ([distrobox](https://distrobox.it/) or [webkit-container-sdk](https://github.com/Igalia/webkit-container-sdk))
 - [x] Boostrapping and installing dependencies in the containers
-- [ ] Building, testing and other commands
+- [x] Building, testing and other commands
 - [ ] Managing git worktrees for parallel work
 - [ ] Same interface to different project-specific tools
 
@@ -24,8 +24,7 @@ Supported browser repos:
 
 But everything is very work in progress.
 
-> **Why the name?**
-> Because browsers go _brrr_
+> Browsers go _brrr_
 
 ```
 Usage: brrr <COMMAND>
