@@ -1,0 +1,19 @@
+[servo]
+build_dir = "target"
+env = [
+  "CC=clang",
+  "CXX=clang++",
+  # "RUST_LOG=error,devtools=debug",
+  "UV_PROJECT_ENVIRONMENT=.devcontainer-venv",
+]
+remote = "git@github.com:servo/servo.git"
+
+[servo.commands]
+bootstrap = """
+  sudo curl -LsSf https://astral.sh/uv/install.sh | sh
+  sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ./mach bootstrap
+"""
+build = "./mach build"
+run = "./mach run"
+test = "./mach wpt"

@@ -1,9 +1,9 @@
-use crate::{browser::BrowserContext, error::Result};
+use crate::{config::Browser, error::Result};
 use std::{path::Path, process::Command};
 
-impl BrowserContext {
-    fn container_name(&self) -> String {
-        format!("{}-dev", self.browser)
+impl Browser {
+    pub fn container_name(&self) -> String {
+        format!("{}-dev", self.name)
     }
 
     pub fn container_setup(&self) -> Result<()> {

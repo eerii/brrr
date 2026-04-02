@@ -1,0 +1,5 @@
+[webkit]
+build_dir = "WebKitBuild"
+env = ["CC=clang", "CXX=clang++", "SCCACHE_SERVER_PORT=4202"]
+remote = "git@github.com:WebKit/WebKit.git"
+use_wkdev = true

@@ -1,0 +1,9 @@
+[chromium]
+build_dir = "out"
+remote = """
+  [ ! -d 'depot_tools' ] && git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+  export PATH="$PWD/depot_tools:$PATH"
+  mkdir chromium-main
+  cd chromium-main
+  fetch --nohooks chromium
+"""

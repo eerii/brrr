@@ -1,4 +1,4 @@
-use brrr::{browser::BrowserContext, Error};
+use brrr::{Error, config::Browser};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -20,6 +20,8 @@ enum Commands {
     },
     #[command(flatten)]
     Exec(ExecCommands),
+    #[command(about = "Display information about this browser")]
+    Info,
     #[command(about = "Manage worktrees")]
     Worktree {
         #[command(subcommand)]
@@ -109,7 +111,7 @@ fn main() {
 
 fn run() -> brrr::Result<()> {
     let cli = Cli::parse();
-    let context = BrowserContext::detect()?;
+    let context = Browser::discover()?;
 
     match cli.command {
         Commands::Bootstrap => {
@@ -132,8 +134,21 @@ fn run() -> brrr::Result<()> {
             if cmd.args().is_empty() {
                 context.run(&run)?;
             } else {
-                context.run(&format!("{}{}", run, cmd.args().join(" ")))?;
+                context.run(&format!("{} {}", run, cmd.args().join(" ")))?;
             }
+        }
+        Commands::Info => {
+            println!("broswer: {}", context.name);
+            println!("root: {}", context.root.display());
+            // TODO: Add container status
+            println!("container: {}", context.container_name());
+            // TOOD: Print other worktrees and their branches
+            println!(
+                "worktrees:\n  - {} (main)",
+                context.main_worktree().display()
+            );
+            let config_str = format!("{:#?}", context.config);
+            println!("config: {}", config_str.trim_start_matches("Config "));
         }
         Commands::Worktree { action: _ } => {}
     }
